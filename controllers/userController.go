@@ -174,19 +174,26 @@ func GetUsers() gin.HandlerFunc{
 		startIndex := (page-1) * recordPerPage
 		startIndex,err =  strconv.Atoi(c.Query("startIndex"))
 
-		matchStage := bson.D{{"$match",bson.D{{}}}}
+		matchStage := bson.D{{"$match",bson.D{{}}}} //simply a where query
 		
-		groupStage := bson.D{{"$group", bson.D{
-			{"_id", bson.D{{"_id", "null"}}}, 
-			{"total_count", bson.D{{"$sum", 1}}}, 
-			{"data", bson.D{{"$push", "$$ROOT"}}}}}}
+		groupStage := bson.D{{"$group", bson.D{ //$group is for grouping
+			{"_id", bson.D{{"_id", "null"}}}, //here no grouping is to be done so on the basis of _id(unique)
+			{"total_count", bson.D{{"$sum", 1}}}, //we need a count so we will sum up different ids 
+			{"data", bson.D{{"$push", "$$ROOT"}}}}}} //$push is to append
 		
-		projectStage := bson.D{
+			//the single data unit retrieved is of type $$ROOT
+			//now data will become an array of ROOT type elements
+
+		projectStage := bson.D{ //$project is select query
 			{"$project",bson.D{
-				{"_id",0},
-				{"total_count",1},
+				{"_id",0}, //first thing shown will be an id
+				{"total_count",1}, //another will be total count which will get from groupStage
 				{"user_items",bson.D{{"$slice",[]interface{}{"$data",startIndex,recordPerPage}}}},
+				
+				//now user_items will get array values of data but a slice only
+				//starting from 0 till 10 units 
 			}},
+
 		}
 
 
